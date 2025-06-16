@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cd.</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0c0c0c;
+            color: #00ff00;
+            font-family: 'Unifont-JP', 'Monaco', 'Menlo', monospace;
+            font-size: 16px;
+            line-height: 1.4;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .terminal-container {
+            display: flex;
+            min-height: 100vh;
+            padding: 40px;
+            gap: 60px;
+        }
+
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .cd-command {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #00ff00;
+            margin-bottom: 30px;
+        }
+
+        .neofetch-container {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 400px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .neofetch-container.show {
+            display: block;
+        }
+
+        .neofetch-header {
+            color: #00ff00;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .neofetch-line {
+            margin: 5px 0;
+            display: flex;
+        }
+
+        .neofetch-label {
+            color: #00ff00;
+            min-width: 80px;
+            font-weight: bold;
+        }
+
+        .neofetch-value {
+            color: #ffffff;
+        }
+
+        .bookmarks-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            color: #00ff00;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .link-item {
+            display: block;
+            color: #00ff00;
+            text-decoration: none;
+            padding: 6px 0;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .link-item:hover {
+            color: #ffffff;
+            padding-left: 20px;
+        }
+
+        .link-item:hover::before {
+            content: "$ ";
+            position: absolute;
+            left: 0;
+            color: #00ff00;
+        }
+
+        .terminal-prompt {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            position: relative;
+        }
+
+        .prompt {
+            color: #00ff00;
+            margin-right: 10px;
+        }
+
+        .input-container {
+            position: relative;
+            flex: 1;
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+            width: 100%;
+            caret-color: transparent;
+        }
+
+        .terminal-input::placeholder {
+            color: #666;
+        }
+
+        .virtual-cursor {
+            position: absolute;
+            top: 0;
+            width: 10px;
+            height: 20px;
+            background-color: #00ff00;
+            animation: blink 1s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .command-output {
+            margin: 10px 0;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .loading-message {
+            color: #666;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .terminal-container {
+                flex-direction: column;
+                gap: 30px;
+                padding: 20px;
+            }
+            
+            .cd-command {
+                font-size: 2rem;
+                text-align: center;
+            }
+            
+            .left-panel {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="left-panel">
+            <div class="cd-command">
+                cd ~/internet
+            </div>
+            
+            <div class="neofetch-container" id="neofetchDisplay">
+                <div class="neofetch-header">firefox@startpage</div>
+                <div class="neofetch-line">
+                    <span class="neofetch-label">OS:</span>
+                    <span class="neofetch-value" id="osInfo">Unknown</span>
+                </div>
+                <div class="neofetch-line">
+                    <span class="neofetch-label">Browser:</span>
+                    <span class="neofetch-value" id="browserInfo">Firefox</span>
+                </div>
+                <div class="neofetch-line">
+                    <span class="neofetch-label">Resolution:</span>
+                    <span class="neofetch-value" id="resolution">1920x1080</span>
+                </div>
+                <div class="neofetch-line">
+                    <span class="neofetch-label">Terminal:</span>
+                    <span class="neofetch-value">firefox-startpage</span>
+                </div>
+                <div class="neofetch-line">
+                    <span class="neofetch-label">Shell:</span>
+                    <span class="neofetch-value">websh 1.0</span>
+                </div>
+                <div class="neofetch-line">
+                    <span class="neofetch-label">Status:</span>
+                    <span class="neofetch-value" id="onlineStatus">Online</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="bookmarks-section">
+                <div class="section-title">bookmarks/</div>
+                <div id="bookmarksList">
+                    <div class="loading-message">Loading bookmarks...</div>
+                </div>
+            </div>
+
+            <div class="command-output" id="commandOutput"></div>
+
+            <div class="terminal-prompt">
+                <span class="prompt">$</span>
+                <div class="input-container">
+                    <input 
+                        type="text" 
+                        class="terminal-input" 
+                        placeholder="search or type command"
+                        id="terminalInput"
+                        onkeypress="handleTerminalCommand(event)"
+                        oninput="updateVirtualCursor()"
+                        onkeyup="updateVirtualCursor()"
+                        onkeydown="updateVirtualCursor()"
+                        autofocus
+                    >
+                    <div class="virtual-cursor" id="virtualCursor"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="commands.js"></script>
+    <script>
+        let startTime = Date.now();
+        let bookmarksData = [];
+
+        // ===== LOAD BOOKMARKS FROM JSON =====
+        async function loadBookmarks() {
+            try {
+                const response = await fetch('bookmarks.json');
+                const data = await response.json();
+                bookmarksData = data.bookmarks;
+                renderBookmarks();
+            } catch (error) {
+                console.error('Error loading bookmarks:', error);
+                // Fallback bookmarks if JSON fails to load
+                bookmarksData = [
+                    {"name": "reddit.com", "url": "https://reddit.com"},
+                    {"name": "youtube.com", "url": "https://youtube.com"},
+                    {"name": "github.com", "url": "https://github.com"}
+                ];
+                renderBookmarks();
+            }
+        }
+
+        function renderBookmarks() {
+            const bookmarksList = document.getElementById('bookmarksList');
+            bookmarksList.innerHTML = '';
+            
+            bookmarksData.forEach(bookmark => {
+                const link = document.createElement('a');
+                link.href = bookmark.url;
+                link.className = 'link-item';
+                link.textContent = bookmark.name;
+                bookmarksList.appendChild(link);
+            });
+        }
+
+        // ===== COMMAND HANDLER =====
+        async function handleTerminalCommand(event) {
+            if (event.key === 'Enter') {
+                const input = event.target;
+                const command = input.value.trim().toLowerCase();
+                const output = document.getElementById('commandOutput');
+                
+                if (commands[command]) {
+                    try {
+                        const result = await commands[command].execute();
+                        output.innerHTML = result;
+                    } catch (error) {
+                        output.innerHTML = `<span style="color: #ff0000;">Error executing command: ${command}</span>`;
+                    }
+                } else if (command) {
+                    window.location.href = `https://www.google.com/search?q=${encodeURIComponent(command)}`;
+                }
+                
+                input.value = '';
+                updateVirtualCursor();
+            }
+        }
+
+        // ===== SYSTEM FUNCTIONS =====
+        function showNeofetch() {
+            const neofetch = document.getElementById('neofetchDisplay');
+            neofetch.classList.add('show');
+            updateSystemInfo();
+        }
+
+        function hideNeofetch() {
+            const neofetch = document.getElementById('neofetchDisplay');
+            neofetch.classList.remove('show');
+        }
+
+        function updateSystemInfo() {
+            const osInfo = document.getElementById('osInfo');
+            const platform = navigator.platform;
+            if (platform.includes('Win')) osInfo.textContent = 'Windows';
+            else if (platform.includes('Mac')) osInfo.textContent = 'macOS';
+            else if (platform.includes('Linux')) osInfo.textContent = 'Linux';
+            else osInfo.textContent = platform;
+
+            const browserInfo = document.getElementById('browserInfo');
+            const userAgent = navigator.userAgent;
+            if (userAgent.includes('Firefox')) {
+                const version = userAgent.match(/Firefox\/(\d+)/);
+                browserInfo.textContent = `Firefox ${version ? version[1] : ''}`;
+            } else if (userAgent.includes('Chrome')) {
+                browserInfo.textContent = 'Chrome';
+            } else if (userAgent.includes('Safari')) {
+                browserInfo.textContent = 'Safari';
+            }
+
+            const resolution = document.getElementById('resolution');
+            resolution.textContent = `${screen.width}x${screen.height}`;
+
+            // Update online status
+            const onlineStatus = document.getElementById('onlineStatus');
+            onlineStatus.textContent = navigator.onLine ? 'Online' : 'Offline';
+            onlineStatus.style.color = navigator.onLine ? '#ffffff' : '#ff0000';
+        }
+
+        function updateVirtualCursor() {
+            const input = document.getElementById('terminalInput');
+            const cursor = document.getElementById('virtualCursor');
+            
+            const tempSpan = document.createElement('span');
+            tempSpan.style.font = window.getComputedStyle(input).font;
+            tempSpan.style.visibility = 'hidden';
+            tempSpan.style.position = 'absolute';
+            tempSpan.style.whiteSpace = 'pre';
+            
+            const textBeforeCursor = input.value.substring(0, input.selectionStart);
+            tempSpan.textContent = textBeforeCursor;
+            
+            document.body.appendChild(tempSpan);
+            const textWidth = tempSpan.offsetWidth;
+            document.body.removeChild(tempSpan);
+            
+            cursor.style.left = textWidth + 'px';
+            
+            if (input.value === '' && input.placeholder) {
+                cursor.style.opacity = '0.3';
+            } else {
+                cursor.style.opacity = '1';
+            }
+        }
+
+        // ===== EVENT LISTENERS =====
+        document.addEventListener('click', function() {
+            document.getElementById('terminalInput').focus();
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+                document.getElementById('terminalInput').focus();
+            }
+        });
+
+        window.addEventListener('load', function() {
+            loadBookmarks();
+            updateVirtualCursor();
+            console.log('Terminal loaded with JSON bookmarks');
+        });
+
+        document.getElementById('terminalInput').addEventListener('focus', updateVirtualCursor);
+        document.getElementById('terminalInput').addEventListener('blur', updateVirtualCursor);
+
+        setInterval(function() {
+            if (document.getElementById('neofetchDisplay').classList.contains('show')) {
+                updateSystemInfo();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
